@@ -1,0 +1,97 @@
+---
+properties:
+  code:
+    description: "The field code of the field.\nField codes have the following limitations:\n\
+      - The maximum character limit is 128\n- Duplicate field codes cannot exist\n\
+      - _ is the only symbol that can be used\n- Numbers cannot be used to start a\
+      \ field code\n"
+    maxLength: 128
+    minLength: 1
+    type: "string"
+  fields:
+    additionalProperties:
+      anyOf:
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetCalcFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetCategoryFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetDateFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetDatetimeFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetDecimalFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetEditorFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetFileFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetGroupFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetGroupSelectFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetLinkFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetLookupFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetModifiedAtFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetModifierFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetMultipleCheckFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetMultipleLineTextFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetMultipleSelectFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetOrganizationSelectFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetRecordIdFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetReferenceTableFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetSingleCheckFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetSingleLineTextFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetSingleSelectFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetStatusAssigneeFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetStatusFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetTableForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetTimeFieldForm"
+      - $ref: "../../openapi.yaml#/components/schemas/AppFormFieldsGetUserSelectFieldForm"
+    description: "An object containing data of fields in a table.\nThe parameters\
+      \ of this object are the same as the properties parameter.\n"
+    type: "object"
+  label:
+    description: "The field name.\n"
+    maxLength: 128
+    minLength: 1
+    type: "string"
+  noLabel:
+    description: "The \"Hide field name\" option.\n- true: The field's name will be\
+      \ hidden.\n- false: The field's name will be displayed.\n"
+    format: "boolean"
+    type: "boolean"
+  type:
+    description: "The field type.\n- GROUP: Group\n- GROUP_SELECT: Group selection\n\
+      - CALC: Calculated\n- CHECK_BOX: Check box\n- DATE: Date\n- DATETIME: Date and\
+      \ time\n- DROP_DOWN: Drop-down\n- FILE: Attachment\n- LINK: Link\n- MULTI_LINE_TEXT:\
+      \ Text Area\n- MULTI_SELECT: Multi-choice\n- NUMBER: Number\n- ORGANIZATION_SELECT:\
+      \ Department selection\n- RADIO_BUTTON: Radio button\n- RECORD_NUMBER: Record\
+      \ number\n- REFERENCE_TABLE: Related Records\n- RICH_TEXT: Rich text\n- SINGLE_LINE_TEXT:\
+      \ Text\n- SUBTABLE: Table\n- TIME: Time\n- USER_SELECT: User selection\n\nFor\
+      \ Lookup fields, specify either SINGLE_LINE_TEXT or NUMBER,\ndepending on the\
+      \ type of the Key field it's looking up.\n"
+    enum:
+    - "CALC"
+    - "CATEGORY"
+    - "CHECK_BOX"
+    - "CREATED_TIME"
+    - "CREATOR"
+    - "DATE"
+    - "DATETIME"
+    - "DROP_DOWN"
+    - "FILE"
+    - "GROUP"
+    - "GROUP_SELECT"
+    - "LINK"
+    - "MODIFIER"
+    - "MULTI_LINE_TEXT"
+    - "MULTI_SELECT"
+    - "NUMBER"
+    - "ORGANIZATION_SELECT"
+    - "RADIO_BUTTON"
+    - "RECORD_NUMBER"
+    - "REFERENCE_TABLE"
+    - "RICH_TEXT"
+    - "SINGLE_LINE_TEXT"
+    - "STATUS"
+    - "STATUS_ASSIGNEE"
+    - "SUBTABLE"
+    - "TIME"
+    - "UPDATED_TIME"
+    - "USER_SELECT"
+    type: "string"
+required:
+- "type"
+type: "object"
+

@@ -1,0 +1,53 @@
+---
+put:
+  description: "Updates the Statuses of Multiple records of an App, that was set with\
+    \ Process Management.\n"
+  operationId: "putRecordsStatusForGuestSpace"
+  parameters:
+  - description: "guest space id"
+    in: "path"
+    name: "guestSpaceId"
+    required: true
+    schema:
+      description: "guest space id"
+      title: "guestSpaceId"
+      type: "integer"
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          properties:
+            app:
+              description: "The App ID.\n"
+              format: "long"
+              type: "integer"
+            records:
+              description: "An array including information of the record to be updated.\
+                \ Up to 100 records can be specified.\nSpecifying more than 100 records\
+                \ will result in an error.\n"
+              items:
+                $ref: "../openapi.yaml#/components/schemas/RecordsStatusPutRecordsStatusPutFormRecord"
+              type: "array"
+          required:
+          - "app"
+          - "records"
+          title: "putRecordsStatusForGuestSpaceRequest"
+          type: "object"
+  responses:
+    "200":
+      description: "success case of records/status/put"
+      content:
+        application/json:
+          schema:
+            properties:
+              records:
+                description: "An array including information of the updated records.\n"
+                items:
+                  $ref: "../openapi.yaml#/components/schemas/RecordsStatusPutRecordsStatusPutOutputFormRecord"
+                type: "array"
+            title: "putRecordsStatusForGuestSpaceResponse"
+            type: "object"
+  tags:
+  - "RECORDS"
+

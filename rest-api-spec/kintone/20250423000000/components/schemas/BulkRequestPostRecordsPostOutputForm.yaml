@@ -1,0 +1,16 @@
+---
+properties:
+  ids:
+    description: "The Record IDs of the created records.\n"
+    items:
+      format: "long"
+      type: "integer"
+    type: "array"
+  revisions:
+    description: "The revision numbers of the records.\n"
+    items:
+      format: "long"
+      type: "integer"
+    type: "array"
+type: "object"
+

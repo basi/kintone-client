@@ -1,0 +1,44 @@
+---
+get:
+  description: "Evaluates the API user's permissions for records and fields within\
+    \ an App.\n"
+  operationId: "getRecordsAclEvaluate"
+  parameters:
+  - description: "The App ID.\n"
+    in: "query"
+    name: "app"
+    required: true
+    schema:
+      description: "The App ID.\n"
+      format: "long"
+      type: "integer"
+  - description: "An array of record IDs that will be evaluated.\nThe maximum limit\
+      \ is 100 IDs.\n"
+    in: "query"
+    name: "ids"
+    required: true
+    schema:
+      description: "An array of record IDs that will be evaluated.\nThe maximum limit\
+        \ is 100 IDs.\n"
+      items:
+        format: "long"
+        type: "integer"
+      type: "array"
+  responses:
+    "200":
+      description: "success case of records/acl/evaluate/get"
+      content:
+        application/json:
+          schema:
+            properties:
+              rights:
+                description: "An array of objects that contain permission settings\
+                  \ of the specified records.\n"
+                items:
+                  $ref: "../openapi.yaml#/components/schemas/RecordsAclEvaluateGetRight"
+                type: "array"
+            title: "getRecordsAclEvaluateResponse"
+            type: "object"
+  tags:
+  - "RECORDS"
+

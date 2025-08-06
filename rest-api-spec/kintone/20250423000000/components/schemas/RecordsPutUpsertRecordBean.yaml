@@ -1,0 +1,18 @@
+---
+properties:
+  id:
+    description: "The Record IDs of the updated/created Records.\n"
+    format: "long"
+    type: "integer"
+  operation:
+    description: "The revision numbers of the Records.\n"
+    enum:
+    - "INSERT"
+    - "UPDATE"
+    type: "string"
+  revision:
+    description: "The revision numbers of the Records.\n"
+    format: "long"
+    type: "integer"
+type: "object"
+

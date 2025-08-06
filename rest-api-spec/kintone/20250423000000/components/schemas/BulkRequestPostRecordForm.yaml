@@ -1,0 +1,51 @@
+---
+properties:
+  id:
+    description: "The Record ID of the record to be updated. Required, if `updateKey`\
+      \ will not be specified.\n\nIf `upsert` is set to `true`:\n- If the record exists,\
+      \ the record will be updated\n- If the record does not exist, it will be added\
+      \ as a new record. The specified ID will be ignored, and a new ID will be set\
+      \ to the new record.\n"
+    format: "long"
+    type: "integer"
+  record:
+    additionalProperties:
+      anyOf:
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostCalcSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostCategorySimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostDateSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostDatetimeSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostDecimalSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostEditorSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostFileSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostGroupSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostLinkSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostModifiedAtSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostModifierSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostMultipleLineTextSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostMultipleSelectSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostRecordIdSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostReferenceTableSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostSimpleTableValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostSingleLineTextSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostSingleSelectSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostStatusSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostTimeSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostUserSelectSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostOrganizationSelectSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostGroupSelectSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostRevisionSimpleValue"
+      - $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostRawRecordIdSimpleValue"
+    description: "Field codes and values are specified in this object.\nIf ignored,\
+      \ the record will not be updated.\n"
+    type: "object"
+  revision:
+    description: "The expected revision number.\nIf the value does not match, an error\
+      \ will occur and all records will not be updated.\nIf the value is not specified\
+      \ or is -1, the revision number will not be checked.\n"
+    format: "long"
+    type: "integer"
+  updateKey:
+    $ref: "../../openapi.yaml#/components/schemas/BulkRequestPostUpdateKey"
+type: "object"
+
