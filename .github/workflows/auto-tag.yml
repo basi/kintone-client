@@ -4,10 +4,22 @@ on:
   pull_request:
     types: [closed]
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      force_release:
+        description: '強制的にリリースを作成'
+        required: false
+        default: 'false'
+        type: boolean
 
 jobs:
   auto-tag:
-    if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'api-update')
+    if: |
+      (github.event.pull_request.merged == true && 
+       (contains(github.event.pull_request.labels.*.name, 'api-update') || 
+        contains(github.event.pull_request.title, 'API仕様') || 
+        contains(github.event.pull_request.title, 'Kintone API仕様'))) ||
+      github.event.inputs.force_release == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
