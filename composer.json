@@ -39,5 +39,6 @@
     "allow-plugins": {
       "php-http/discovery": true
     }
-  }
+  },
+  "version": "0.20250812101950.0"
 }
