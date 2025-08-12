@@ -14,7 +14,7 @@ jobs:
     
     steps:
       - name: リポジトリをチェックアウト
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -27,9 +27,9 @@ jobs:
           
           if [ -z "$LATEST_TAG" ]; then
             # 初回の場合
-            echo "latest_tag=v0.20000101.0" >> $GITHUB_OUTPUT
+            echo "latest_tag=v0.20250801.0" >> $GITHUB_OUTPUT
             echo "previous_major=0" >> $GITHUB_OUTPUT  
-            echo "previous_date=20000101" >> $GITHUB_OUTPUT
+            echo "previous_date=20250801" >> $GITHUB_OUTPUT
             echo "previous_patch=0" >> $GITHUB_OUTPUT
             echo "初回リリースです"
           else
@@ -134,15 +134,23 @@ jobs:
           git config --global user.name "GitHub Action"
           
           git add composer.json
-          git commit -m "bump version to $NEW_VERSION
+          
+          # HereDocを使ってコミットメッセージを構築
+          echo 'COMMIT_MESSAGE<<EOF' >> $GITHUB_ENV
+          echo "bump version to $NEW_VERSION" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "- Update type: $UPDATE_TYPE" >> $GITHUB_ENV
+          echo "- API specification: ${{ steps.get_api_version.outputs.api_version }}" >> $GITHUB_ENV
+          if [ "$UPDATE_TYPE" = "major" ]; then
+            echo "- src changes: ${{ steps.check_src_changes.outputs.src_changed_files_count }} files" >> $GITHUB_ENV
+          fi
+          echo "" >> $GITHUB_ENV
+          echo "🤖 Auto-generated Pull Request" >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
 
-- Update type: $UPDATE_TYPE
-- API specification: ${{ steps.get_api_version.outputs.api_version }}
-$(if [ "$UPDATE_TYPE" = "major" ]; then echo "- src changes: ${{ steps.check_src_changes.outputs.src_changed_files_count }} files"; fi)
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>"
+      - name: コミットを作成
+        run: |
+          git commit -m "${{ env.COMMIT_MESSAGE }}"
 
       - name: タグを作成
         id: create_tag
@@ -152,35 +160,39 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
           API_VERSION="${{ steps.get_api_version.outputs.api_version }}"
           
           TAG_NAME="v$NEW_VERSION"
-          
-          # タグメッセージを作成
+
+          echo 'TAG_MESSAGE<<EOF' >> $GITHUB_ENV
           if [ "$UPDATE_TYPE" = "major" ]; then
-            TAG_MESSAGE="Kintone API Specification Update
-
-Version: $NEW_VERSION
-API Spec: $API_VERSION  
-Type: API specification update with code changes
-Changed files in src/: ${{ steps.check_src_changes.outputs.src_changed_files_count }}
-
-🤖 Auto-generated release"
+            echo "Kintone API Specification Update" >> $GITHUB_ENV
+            echo "" >> $GITHUB_ENV
+            echo "Version: $NEW_VERSION" >> $GITHUB_ENV
+            echo "API Spec: $API_VERSION" >> $GITHUB_ENV
+            echo "Type: API specification update with code changes" >> $GITHUB_ENV
+            echo "Changed files in src/: ${{ steps.check_src_changes.outputs.src_changed_files_count }}" >> $GITHUB_ENV
           else
-            TAG_MESSAGE="Patch Release
-
-Version: $NEW_VERSION
-Type: Patch release (no src changes)
-
-🤖 Auto-generated release"
+            echo "Patch Release" >> $GITHUB_ENV
+            echo "" >> $GITHUB_ENV
+            echo "Version: $NEW_VERSION" >> $GITHUB_ENV
+            echo "Type: Patch release (no src changes)" >> $GITHUB_ENV
           fi
+          echo "" >> $GITHUB_ENV
+          echo "🤖 Auto-generated release" >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
+
+      - name: タグを作成
+        run: |
+          NEW_VERSION="${{ steps.calculate_version.outputs.new_version }}"
+          TAG_NAME="v$NEW_VERSION"
           
           # タグを作成
-          git tag -a "$TAG_NAME" -m "$TAG_MESSAGE"
+          git tag -a "$TAG_NAME" -m "${{ env.TAG_MESSAGE }}"
           git push origin "$TAG_NAME"
           
           echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
           echo "タグ $TAG_NAME を作成しました"
 
       - name: GitHubリリースを作成
-        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
+        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
         with:
           tag_name: ${{ steps.create_tag.outputs.tag_name }}
           name: "🚀 Release ${{ steps.calculate_version.outputs.new_version }}"
