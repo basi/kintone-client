@@ -33,13 +33,13 @@ class KintoneClientGenerator
 
         echo "📋 Found latest spec version: $latestVersion\n";
 
-        $openApiFile = $this->specPath . "/kintone/$latestVersion/openapi.yaml";
+        $openApiFile = $this->specPath . "/$latestVersion/openapi.yaml";
         if (!file_exists($openApiFile)) {
             throw new RuntimeException("OpenAPI file not found: $openApiFile");
         }
 
         // Use bundled version if available
-        $bundledFile = $this->specPath . "/kintone/$latestVersion/bundled/openapi.yaml";
+        $bundledFile = $this->specPath . "/$latestVersion/bundled/openapi.yaml";
         if (file_exists($bundledFile)) {
             $openApiFile = $bundledFile;
             echo "📦 Using bundled OpenAPI specification\n";
@@ -65,7 +65,7 @@ class KintoneClientGenerator
 
     private function findLatestSpecVersion(): ?string
     {
-        $kintoneDir = $this->specPath . '/kintone';
+        $kintoneDir = $this->specPath;
         if (!is_dir($kintoneDir)) {
             return null;
         }
