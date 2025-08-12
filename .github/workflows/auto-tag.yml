@@ -1,0 +1,233 @@
+name: 自動タグ作成とリリース
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  auto-tag:
+    if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'api-update')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 最新タグを取得
+        id: get_latest_tag
+        run: |
+          # 最新のタグを取得（ハイブリッド形式: 0.yyyymmdd.patch）
+          LATEST_TAG=$(git tag -l "v0.*" | sort -V | tail -1)
+          
+          if [ -z "$LATEST_TAG" ]; then
+            # 初回の場合
+            echo "latest_tag=v0.20250801.0" >> $GITHUB_OUTPUT
+            echo "previous_major=0" >> $GITHUB_OUTPUT  
+            echo "previous_date=20250801" >> $GITHUB_OUTPUT
+            echo "previous_patch=0" >> $GITHUB_OUTPUT
+            echo "初回リリースです"
+          else
+            echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+            
+            # タグからバージョン情報を抽出 (v0.yyyymmdd.patch)
+            VERSION_PART=$(echo $LATEST_TAG | sed 's/^v//')
+            MAJOR=$(echo $VERSION_PART | cut -d. -f1)
+            DATE=$(echo $VERSION_PART | cut -d. -f2)  
+            PATCH=$(echo $VERSION_PART | cut -d. -f3)
+            
+            echo "previous_major=$MAJOR" >> $GITHUB_OUTPUT
+            echo "previous_date=$DATE" >> $GITHUB_OUTPUT
+            echo "previous_patch=$PATCH" >> $GITHUB_OUTPUT
+            echo "最新タグ: $LATEST_TAG (Major: $MAJOR, Date: $DATE, Patch: $PATCH)"
+          fi
+
+      - name: API仕様バージョンを取得
+        id: get_api_version
+        run: |
+          # rest-api-specディレクトリから最新バージョンを取得
+          if [ -d "rest-api-spec" ]; then
+            API_VERSION=$(find rest-api-spec -maxdepth 1 -type d -name "20*" | sort -r | head -1 | xargs basename 2>/dev/null || echo "")
+          else
+            echo "❌ rest-api-spec ディレクトリが見つかりません"
+            exit 1
+          fi
+          
+          if [ -z "$API_VERSION" ]; then
+            echo "❌ API仕様バージョンが見つかりません"
+            exit 1
+          fi
+          
+          echo "api_version=$API_VERSION" >> $GITHUB_OUTPUT
+          echo "API仕様バージョン: $API_VERSION"
+
+      - name: src差分をチェック
+        id: check_src_changes
+        run: |
+          LATEST_TAG="${{ steps.get_latest_tag.outputs.latest_tag }}"
+          
+          if [ "$LATEST_TAG" = "v0.20000101.0" ]; then
+            # 初回の場合は必ずsrc差分ありとして扱う
+            echo "has_src_changes=true" >> $GITHUB_OUTPUT
+            echo "初回リリースのため、src差分ありとして処理します"
+          else
+            # 前回タグからのsrcディレクトリの変更をチェック
+            if git diff --quiet "$LATEST_TAG" HEAD -- src/; then
+              echo "has_src_changes=false" >> $GITHUB_OUTPUT
+              echo "srcディレクトリに変更はありません"
+            else
+              echo "has_src_changes=true" >> $GITHUB_OUTPUT
+              echo "srcディレクトリに変更があります"
+              
+              # 変更されたファイル数を取得
+              CHANGED_FILES=$(git diff --name-only "$LATEST_TAG" HEAD -- src/ | wc -l)
+              echo "src_changed_files_count=$CHANGED_FILES" >> $GITHUB_OUTPUT
+              echo "変更されたsrcファイル数: $CHANGED_FILES"
+            fi
+          fi
+
+      - name: 新しいバージョンを計算
+        id: calculate_version
+        run: |
+          API_VERSION="${{ steps.get_api_version.outputs.api_version }}"
+          PREVIOUS_DATE="${{ steps.get_latest_tag.outputs.previous_date }}"
+          PREVIOUS_PATCH="${{ steps.get_latest_tag.outputs.previous_patch }}"
+          HAS_SRC_CHANGES="${{ steps.check_src_changes.outputs.has_src_changes }}"
+          
+          if [ "$HAS_SRC_CHANGES" = "true" ]; then
+            # src差分あり: 日付を更新し、patch=0
+            NEW_VERSION="0.$API_VERSION.0"
+            UPDATE_TYPE="major"
+          else
+            # src差分なし: 日付はそのまま、patch++
+            NEW_PATCH=$((PREVIOUS_PATCH + 1))
+            NEW_VERSION="0.$PREVIOUS_DATE.$NEW_PATCH"
+            UPDATE_TYPE="patch"
+          fi
+          
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "update_type=$UPDATE_TYPE" >> $GITHUB_OUTPUT
+          echo "新しいバージョン: v$NEW_VERSION (更新タイプ: $UPDATE_TYPE)"
+
+      - name: composer.jsonのバージョンを更新
+        id: update_composer
+        run: |
+          NEW_VERSION="${{ steps.calculate_version.outputs.new_version }}"
+          
+          # composer.jsonのバージョンを更新
+          jq --arg version "$NEW_VERSION" '.version = $version' composer.json > composer.json.tmp
+          mv composer.json.tmp composer.json
+          
+          echo "composer.jsonのバージョンを $NEW_VERSION に更新しました"
+
+      - name: 変更をコミット
+        run: |
+          NEW_VERSION="${{ steps.calculate_version.outputs.new_version }}"
+          UPDATE_TYPE="${{ steps.calculate_version.outputs.update_type }}"
+          
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          
+          git add composer.json
+          
+          # HereDocを使ってコミットメッセージを構築
+          echo 'COMMIT_MESSAGE<<EOF' >> $GITHUB_ENV
+          echo "bump version to $NEW_VERSION" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "- Update type: $UPDATE_TYPE" >> $GITHUB_ENV
+          echo "- API specification: ${{ steps.get_api_version.outputs.api_version }}" >> $GITHUB_ENV
+          if [ "$UPDATE_TYPE" = "major" ]; then
+            echo "- src changes: ${{ steps.check_src_changes.outputs.src_changed_files_count }} files" >> $GITHUB_ENV
+          fi
+          echo "" >> $GITHUB_ENV
+          echo "🤖 Auto-generated Pull Request" >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
+
+      - name: コミットを作成
+        run: |
+          git commit -m "${{ env.COMMIT_MESSAGE }}"
+
+      - name: タグを作成
+        id: create_tag
+        run: |
+          NEW_VERSION="${{ steps.calculate_version.outputs.new_version }}"
+          UPDATE_TYPE="${{ steps.calculate_version.outputs.update_type }}"
+          API_VERSION="${{ steps.get_api_version.outputs.api_version }}"
+          
+          TAG_NAME="v$NEW_VERSION"
+
+          echo 'TAG_MESSAGE<<EOF' >> $GITHUB_ENV
+          if [ "$UPDATE_TYPE" = "major" ]; then
+            echo "Kintone API Specification Update" >> $GITHUB_ENV
+            echo "" >> $GITHUB_ENV
+            echo "Version: $NEW_VERSION" >> $GITHUB_ENV
+            echo "API Spec: $API_VERSION" >> $GITHUB_ENV
+            echo "Type: API specification update with code changes" >> $GITHUB_ENV
+            echo "Changed files in src/: ${{ steps.check_src_changes.outputs.src_changed_files_count }}" >> $GITHUB_ENV
+          else
+            echo "Patch Release" >> $GITHUB_ENV
+            echo "" >> $GITHUB_ENV
+            echo "Version: $NEW_VERSION" >> $GITHUB_ENV
+            echo "Type: Patch release (no src changes)" >> $GITHUB_ENV
+          fi
+          echo "" >> $GITHUB_ENV
+          echo "🤖 Auto-generated release" >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
+
+      - name: タグを作成
+        run: |
+          NEW_VERSION="${{ steps.calculate_version.outputs.new_version }}"
+          TAG_NAME="v$NEW_VERSION"
+          
+          # タグを作成
+          git tag -a "$TAG_NAME" -m "${{ env.TAG_MESSAGE }}"
+          git push origin "$TAG_NAME"
+          
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "タグ $TAG_NAME を作成しました"
+
+      - name: GitHubリリースを作成
+        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
+        with:
+          tag_name: ${{ steps.create_tag.outputs.tag_name }}
+          name: "🚀 Release ${{ steps.calculate_version.outputs.new_version }}"
+          body: |
+            ## 📦 リリース ${{ steps.calculate_version.outputs.new_version }}
+            
+            ### 📊 変更内容
+            - **バージョン**: `${{ steps.calculate_version.outputs.new_version }}`
+            - **API仕様**: `${{ steps.get_api_version.outputs.api_version }}`
+            - **更新タイプ**: `${{ steps.calculate_version.outputs.update_type }}`
+            ${{ steps.calculate_version.outputs.update_type == 'major' && format('- **変更ファイル数**: {0}個', steps.check_src_changes.outputs.src_changed_files_count) || '- **変更**: パッチリリース（srcに変更なし）' }}
+            
+            ### 🔗 リンク
+            - [📋 API仕様 (kintone/rest-api-spec)](https://github.com/kintone/rest-api-spec)
+            - [📖 Kintone REST API ドキュメント](https://developer.kintone.io/hc/ja/categories/18815983)
+            - [📦 Packagist](https://packagist.org/packages/thecocojp/kintone-rest-api-client-php)
+            
+            ### 📥 インストール方法
+            ```bash
+            composer require thecocojp/kintone-rest-api-client-php:${{ steps.calculate_version.outputs.new_version }}
+            ```
+            
+            ---
+            🤖 *自動生成されたリリース*
+          draft: false
+          prerelease: false
+
+      - name: 実行結果をまとめ
+        run: |
+          echo "🎉 リリース処理が完了しました！"
+          echo ""
+          echo "📊 結果:"
+          echo "  - 新バージョン: ${{ steps.calculate_version.outputs.new_version }}"
+          echo "  - 更新タイプ: ${{ steps.calculate_version.outputs.update_type }}"  
+          echo "  - API仕様: ${{ steps.get_api_version.outputs.api_version }}"
+          echo "  - タグ: ${{ steps.create_tag.outputs.tag_name }}"
+          echo ""
+          echo "🔗 リリースページ: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ steps.create_tag.outputs.tag_name }}"

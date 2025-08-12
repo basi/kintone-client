@@ -1,0 +1,20 @@
+# Dependencies
+vendor/
+composer.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# API Specification (downloaded at build time)
+rest-api-spec/
+
+# Generated files
+src/Api/
+src/Model/
