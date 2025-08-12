@@ -16,14 +16,9 @@ if [ -d "$TEMP_DIR" ]; then
     rm -rf "$TEMP_DIR"
 fi
 
-# Clone only the necessary files with minimal depth
+# Clone with minimal depth (compatible with older git versions)
 echo "📡 Cloning repository with minimal footprint..."
-git clone --depth 1 --filter=blob:none --sparse-checkout https://github.com/kintone/rest-api-spec.git "$TEMP_DIR"
-
-# Configure sparse checkout to only include the kintone directory
-cd "$TEMP_DIR"
-git sparse-checkout init --cone
-git sparse-checkout set kintone
+git clone --depth 1 https://github.com/kintone/rest-api-spec.git "$TEMP_DIR"
 
 # Remove existing spec directory if it exists
 if [ -d "$SPEC_DIR" ]; then
@@ -33,7 +28,19 @@ fi
 # Copy only the kintone directory (no package.json, node_modules, etc.)
 echo "📁 Copying API specification files..."
 mkdir -p "$SPEC_DIR"
-cp -r kintone/* "$SPEC_DIR/"
+
+# Navigate to temp directory and check if kintone directory exists
+cd "$TEMP_DIR"
+if [ -d "kintone" ]; then
+    cp -r kintone/* "$SPEC_DIR/"
+else
+    echo "⚠️  kintone directory not found, checking repository structure..."
+    ls -la
+    echo "❌ Error: Could not find kintone directory in the repository"
+    cd "$PROJECT_ROOT"
+    rm -rf "$TEMP_DIR"
+    exit 1
+fi
 
 # Clean up temp directory
 cd "$PROJECT_ROOT"
