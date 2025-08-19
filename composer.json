@@ -5,8 +5,7 @@
   "license": "MIT",
   "authors": [
     {
-      "name": "thecocojp",
-      "email": "thecocojp@example.com"
+      "name": "thecocojp"
     }
   ],
   "require": {
@@ -41,3 +40,4 @@
     }
   }
 }
+

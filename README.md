@@ -2,6 +2,9 @@
 
 A PHP client library for Kintone REST API, automatically generated from the official OpenAPI specification.
 
+> [!WARNING]
+> Experimental: This repository is still under early development.
+
 ## Features
 
 - 🚀 Auto-generated from official [Kintone REST API specification](https://github.com/kintone/rest-api-spec)
