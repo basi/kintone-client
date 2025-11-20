@@ -1,11 +1,11 @@
 {
-  "name": "thecocojp/kintone-rest-api-client-php",
+  "name": "basi/kintone-client",
   "description": "Kintone REST API client for PHP generated from OpenAPI specification",
   "type": "library",
   "license": "MIT",
   "authors": [
     {
-      "name": "thecocojp"
+      "name": "basi"
     }
   ],
   "require": {
