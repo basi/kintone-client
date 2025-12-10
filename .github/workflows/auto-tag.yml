@@ -195,7 +195,7 @@ jobs:
           echo "タグ $TAG_NAME を作成しました"
 
       - name: GitHubリリースを作成
-        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
           tag_name: ${{ steps.create_tag.outputs.tag_name }}
           name: "🚀 Release ${{ steps.calculate_version.outputs.new_version }}"
